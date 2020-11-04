@@ -9,9 +9,9 @@ def seleccion(poblacion):
     for n in range(1,len(poblacion)):
         seleccionados.append(poblacion[random.randrange(n)])
         # Para evitar cruzar un individuo consigo mismo
-        while (n%2 == 0 and poblacion[n-1]["entradas"] == poblacion[n]["entradas"]
-            and poblacion[n-1]["hidden"] == poblacion[n]["hidden"]):
-            seleccionados[n] = poblacion[random.randrange(n)]
+     #   while (n%2 == 0 and poblacion[n-1]["entradas"] == poblacion[n]["entradas"]
+     #       and poblacion[n-1]["hidden"] == poblacion[n]["hidden"]):
+     #       seleccionados[n] = poblacion[random.randrange(n)]
     return seleccionados
 
 def cruza_uniforme(individuo_1, individuo_2):
@@ -44,6 +44,9 @@ def cruza_uniforme(individuo_1, individuo_2):
     hijo_2["entradas"] = entradas_aux
     hijo_2["hidden"] = hidden_aux 
     
+    # Este if es para que no se me creen hijos sin capa oculta o entradas
+    if (hijo_1["hidden"] == 0 or hijo_2["hidden"] == 0) :
+        return cruza_uniforme(individuo_1,individuo_2)
     return hijo_1,hijo_2
 
 def mutacion(individuo):
@@ -55,6 +58,9 @@ def mutacion(individuo):
     if (hidden_aux > entradas_aux): hidden_aux = hidden_aux & entradas_aux
     individuo["entradas"] = entradas_aux
     individuo["hidden"] = hidden_aux
+    
+    # If para que no se me mute a 0
+    if (individuo["hidden"] == 0) : return mutacion(individuo)
     return individuo
 
 # Funcion que utiliza para ordenar la lista
@@ -65,12 +71,11 @@ def fitness_sort(e):
 
 # Definir la funcion que vamos a usar para prueba
 x = np.linspace(-5, 5, 50).reshape(1,-1)
-y = 2 * np.cos(x) + np.sin(3*x) + 5
-
+y = (2 * np.cos(x) + np.sin(3*x) + 5)
 # Variables
 poblacion = []
 tam_poblacion = 50
-maximo_entradas = 20 # Esto va a depender de cuantos puntos definamos en la funcion
+maximo_entradas = 25 # Esto va a depender de cuantos puntos definamos en la funcion
 
 # Definir poblacion inicial
 for i in range(1,tam_poblacion):
@@ -92,8 +97,10 @@ for i in range(1,tam_poblacion):
     
 # Calcular el fitness de la poblacion
 for individuo in poblacion:
+    x_aux = x[0][-individuo["entradas"]:] # Esto es porque se genera un arreglo detro de otro
+    y_aux = y[0][-individuo["entradas"]:]
     individuo["mse"] = rbfn.calculo_mse(individuo["entradas"],individuo["hidden"],individuo["centers"],
-        x[-individuo["entradas"]:],y[-individuo["entradas"]:]) #TODO ver como pasar el x e y, parte complicada x2
+            x_aux,y_aux)
     
 # Ordenar poblacion por fitness
 poblacion.sort(key=fitness_sort)
@@ -102,20 +109,23 @@ poblacion.sort(key=fitness_sort)
 mejor_individuo = poblacion[0] # Almacenar el mejor individuo de la poblacion (solo inicializo)
 mejor_solucion = 0 # Cuenta las iteraciones sin una mejor solucion
 
-while mejor_solucion < 3 :        
+while mejor_solucion < 10 :        
     
     # Realizar seleccion
-    seleccion = seleccion(poblacion)
+    print("Seleccionando\n")
+    seleccionados = seleccion(poblacion)
     
     # Cruzar seleccion 
+    print("Cruzando\n")
     hijos = []
-    for i in range(1,len(seleccion)):
-        hijos.append(cruza_uniforme(seleccion[i-1],seleccion[i]))
+    for i in range(1,len(seleccionados)):
+        hijos.extend(cruza_uniforme(seleccionados[i-1],seleccionados[i]))
         i+=1
     
     # Probabilidad de mutacion
     if (random.random() > 0.8) :
-        mutacion(hijos[random.randrange(len(hijos))]) #TODO revisar este indice
+        print("Mutando\n")
+        mutacion(hijos[random.randrange(len(hijos)-1)]) #TODO revisar este indice
     
     # Obtener centroides (model.get sentros)
     for individuo in hijos:
@@ -124,20 +134,27 @@ while mejor_solucion < 3 :
         individuo["centers"] = model.cluster_centers_ # Asigno centroides
     
     # Calcular el fitness de los hijos
+    print("Calculando Fitness\n")
     for individuo in poblacion:
+        x_aux = x[0][-individuo["entradas"]:] # Esto es porque se genera un arreglo detro de otro
+        y_aux = y[0][-individuo["entradas"]:]
         individuo["mse"] = rbfn.calculo_mse(individuo["entradas"],individuo["hidden"],individuo["centers"],
-            x[-individuo["entradas"]:],y[-individuo["entradas"]:]) #TODO ver como pasar el x e y, parte complicada x2
+            x_aux,y_aux) #TODO ver como pasar el x e y, parte complicada x2
     
     # Crear nueva poblacion
+    print("Calculando nueva poblacion\n")
     poblacion.extend(hijos) # Agrego los hijos
     poblacion.sort(key=fitness_sort) # Ordeno por fitness
     poblacion = poblacion[:tam_poblacion] # Trunco la poblacion
     
     # Evaluo el mejor individuo para la condicion de parada
-    if ((mejor_individuo["mse"] > poblacion["mse"]) or (mejor_individuo["mse"] == -1.0)) :
+    if ((mejor_individuo["mse"] > poblacion[0]["mse"]) and poblacion[0]["mse"]!=-1) :
         mejor_individuo = poblacion[0]
         mejor_solucion = 0
     else:
         mejor_solucion+=1
+    print("Mejor Fitness: ")
+    print(mejor_individuo)
+    print("\n")
     # Repite
 print(mejor_individuo)
