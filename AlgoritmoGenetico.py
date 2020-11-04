@@ -80,8 +80,8 @@ for i in range(1,tam_poblacion):
         "centers": [],
         "mse" : -1.0
     }
-    aux_entradas = random.randrange(maximo_entradas)
-    aux_hidden = random.randrange(aux_entradas)
+    aux_entradas = random.randrange(maximo_entradas) + 1
+    aux_hidden = random.randrange(aux_entradas) + 1
     aux["entradas"] = aux_entradas # Asigno entradas
     aux["hidden"] = aux_hidden # Asigno neuronas
     # Calculo de los clusters del individuo
@@ -115,7 +115,7 @@ while mejor_solucion < 3 :
     
     # Probabilidad de mutacion
     if (random.random() > 0.8) :
-        mutacion(hijos[random.randrange(len(hijos)-1)]) #TODO revisar este indice
+        mutacion(hijos[random.randrange(len(hijos))]) #TODO revisar este indice
     
     # Obtener centroides (model.get sentros)
     for individuo in hijos:
