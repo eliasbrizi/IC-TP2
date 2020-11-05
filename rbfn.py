@@ -39,6 +39,42 @@ def calculo_mse(cant_entradas,cant_neuronas,centroides,x,y):
     return mse
 
 
+def calculo_mse(cant_entradas,cant_neuronas,centroides,x,y,x_test,y_test):
+    """
+    Arguments: \n
+    x = entrada de la red\n
+    y = valores de esas entradas\n
+    x_test = entrada para testing\n
+    y_test = salida esperada\n
+    """
+    mse = 0;
+    p = cant_entradas
+    k = cant_neuronas
+    # Calcular el sigma
+    sigma = (max(centroides)-min(centroides))/np.sqrt(2*k)
+    sigma = sigma[0]
+    
+    # Calcular matriz G
+    G = np.zeros((p,k))
+    for i in range(p):
+        for j in range(k):
+            dist = np.linalg.norm(x[i]-centroides[j], 2) # Distancia euclideana Entre Xi y Cj
+            G[i,j] = np.exp((-1/(sigma**2))*dist**2) # Resultado de la función de activación para Gij
+
+    W = np.dot(np.linalg.pinv(G), y.T)
+
+    # Propagar la red
+    G = np.zeros((p,k))
+    for i in range(p):
+        for j in range(k):
+            dist = np.linalg.norm(x[i]-centroides[j], 2) # Distancia euclideana Entre Xi y Cj
+            G[i,j] = np.exp((-1/(sigma**2))*dist**2) # Resultado de la función de activación para Gij
+    ynew = np.dot(G, W) # Salida de la red
+
+    mse = np.square(np.subtract(y,ynew)).mean()
+
+    return mse
+
 
 
 
