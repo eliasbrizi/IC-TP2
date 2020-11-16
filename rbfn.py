@@ -36,7 +36,8 @@ def calculo_mse(cant_entradas,cant_neuronas,centroides,x,y,x_test,y_test):
             G[i,j] = np.exp((-1/(sigma**2))*dist**2) # Resultado de la función de activación para Gij
     ynew = np.dot(G, W) # Salida de la red
 
-    mse = np.square(np.subtract(y_test,ynew)).mean()
+    #mse = np.square(np.subtract(y_test,ynew)).mean()
+    mse = np.square(np.subtract(y_test[-(len(y_test)-len(y)):],ynew[-(len(y_test)-len(y)):])).mean()
 
     return mse
 
